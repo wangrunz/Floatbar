@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.view.Gravity;
@@ -13,13 +14,14 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 
 public class FloatingWindow extends Service{
 
     private WindowManager wm;
     private LinearLayout ll;
-    private Button stop;
+    private TextView tv;
 
     @Nullable
     @Override
@@ -32,20 +34,24 @@ public class FloatingWindow extends Service{
 
         wm =(WindowManager)getSystemService(WINDOW_SERVICE);
         ll = new LinearLayout(this);
-        stop = new Button(this);
-        ViewGroup.LayoutParams btnParameter = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        stop.setText("stop");
-        stop.setLayoutParams(btnParameter);
-        LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.MATCH_PARENT);
-        ll.setBackgroundColor(Color.argb(66,255,0,0));
-        ll.setLayoutParams(llParameters);
+        tv = new TextView(this);
+        tv.setText("X");
+        tv.setGravity(Gravity.CENTER);
+        tv.setTextColor(Color.argb(100,0,0,0));
 
-        final WindowManager.LayoutParams parameters = new WindowManager.LayoutParams(400,150,WindowManager.LayoutParams.TYPE_PHONE,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSPARENT);
+        LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.MATCH_PARENT);
+        ll.setBackgroundColor(Color.argb(66,255,255,255));
+        ll.setLayoutParams(llParameters);
+        ll.setGravity(Gravity.CENTER);
+
+        final WindowManager.LayoutParams parameters = new WindowManager.LayoutParams(100,100,WindowManager.LayoutParams.TYPE_PHONE,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSPARENT);
+        Point size = new Point();
+        wm.getDefaultDisplay().getSize(size);
         parameters.x=0;
         parameters.y=0;
         parameters.gravity= Gravity.CENTER;
 
-        ll.addView(stop);
+        ll.addView(tv);
         wm.addView(ll,parameters);
         ll.setOnTouchListener(new View.OnTouchListener(){
             private WindowManager.LayoutParams updatedParameters = parameters;
@@ -74,12 +80,10 @@ public class FloatingWindow extends Service{
                 return false;
             }
         });
-        stop.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                wm.removeView(ll);
-                stopSelf();
-            }
-        });
+    }
+    @Override
+    public void onDestroy(){
+        wm.removeView(ll);
+        stopSelf();
     }
 }
