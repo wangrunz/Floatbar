@@ -8,7 +8,7 @@ An Android **FloatingActionButton** overlay above window. *FAB* can move around 
 ![alt text](https://github.com/wangrunz/Floatbar/blob/master/screenshot/demo.gif?raw=true =300x)
 ### Screenshots
 1. Demo dashboard
-![alt text](https://github.com/wangrunz/Floatbar/blob/master/screenshot/Screenshot_1478804438.png?raw=true =300x)
+![alt text](https://github.com/wangrunz/Floatbar/blob/master/screenshot/Screenshot_1478804438.png =300x)
 2. Floating window
 ![alt text](https://github.com/wangrunz/Floatbar/blob/master/screenshot/Screenshot_1478804448.png?raw=true =300x)
 3. Floating window with clipboard history
