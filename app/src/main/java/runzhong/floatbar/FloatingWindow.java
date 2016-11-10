@@ -32,6 +32,7 @@ import android.widget.TextView;
 
 import java.util.List;
 import java.util.Vector;
+import java.lang.Math;
 
 
 public class FloatingWindow extends Service{
@@ -55,13 +56,7 @@ public class FloatingWindow extends Service{
 
         }
     };
-    /**
-     * This method converts dp unit to equivalent pixels, depending on device density.
-     *
-     * @param dp A value in dp (density independent pixels) unit. Which we need to convert into pixels
-     * @param context Context to get resources and device specific display metrics
-     * @return A float value to represent px equivalent to dp depending on device density
-     */
+
     public static float convertDpToPixel(float dp, WindowManager windowManager){
         DisplayMetrics metrics=new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
@@ -69,13 +64,6 @@ public class FloatingWindow extends Service{
         return px;
     }
 
-    /**
-     * This method converts device specific pixels to density independent pixels.
-     *
-     * @param px A value in px (pixels) unit. Which we need to convert into db
-     * @param context Context to get resources and device specific display metrics
-     * @return A float value to represent dp equivalent to px value
-     */
     public static float convertPixelsToDp(float px, WindowManager windowManager){
         DisplayMetrics metrics=new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
@@ -133,11 +121,12 @@ public class FloatingWindow extends Service{
         wm.addView(ll,parameters);
 
         fab.setOnTouchListener(new View.OnTouchListener() {
-            private WindowManager.LayoutParams updatedParameters = parameters;
+
             int x,y;
             float touchedX, touchedY;
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                WindowManager.LayoutParams updatedParameters = parameters;
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         x = updatedParameters.x;
@@ -145,8 +134,21 @@ public class FloatingWindow extends Service{
                         touchedX=event.getRawX();
                         touchedY=event.getRawY();
                         break;
+                    case MotionEvent.ACTION_UP:
+                        if(Math.abs(touchedX-event.getRawX())<10 && Math.abs(touchedY-event.getRawY())<10){
+                            if (rv.getVisibility() == View.VISIBLE) {
+                                rv.setVisibility(View.GONE);
+                                updatedParameters.width=(int)convertDpToPixel(60,wm);
+                                updatedParameters.height=(int)convertDpToPixel(60,wm);
+                            } else {
+                                updatedParameters.width=(int)convertDpToPixel(150,wm);
+                                updatedParameters.height=(int)convertDpToPixel(300,wm);
+                                rv.setVisibility(View.VISIBLE);
+                            }
+                            wm.updateViewLayout(ll,updatedParameters);
+                        }
                     case MotionEvent.ACTION_MOVE:
-                        updatedParameters.x=(int)(x+(event.getRawX()-touchedX));
+                        //updatedParameters.x=(int)(x+(event.getRawX()-touchedX));
                         updatedParameters.y=(int)(y+(event.getRawY()-touchedY));
 
                         wm.updateViewLayout(ll,updatedParameters);
@@ -157,22 +159,7 @@ public class FloatingWindow extends Service{
                 return false;
             }
         });
-        fab.setOnClickListener(new View.OnClickListener() {
-            private WindowManager.LayoutParams updatedParameters = parameters;
-            @Override
-            public void onClick(View v) {
-                if (rv.getVisibility() == View.VISIBLE) {
-                    rv.setVisibility(View.GONE);
-                    updatedParameters.width=(int)convertDpToPixel(80,wm);
-                    updatedParameters.height=(int)convertDpToPixel(80,wm);
-                } else {
-                    updatedParameters.width=(int)convertDpToPixel(150,wm);
-                    updatedParameters.height=(int)convertDpToPixel(300,wm);
-                    rv.setVisibility(View.VISIBLE);
-                }
-                wm.updateViewLayout(ll,updatedParameters);
-            }
-        });
+
         mClipboardManager=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
         mClipboardManager.addPrimaryClipChangedListener(mOnPrimaryClipChangedListener);
 
