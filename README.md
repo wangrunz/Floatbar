@@ -1,8 +1,5 @@
-Floatingbar
-===========
-A practice with **FloatingActionButton** and **ClipboardManager** of native *Android*.
-
-##Floating Clipboard Tracker
+Floating Clipboard Tracker
+==========================
 ### Description
 An Android **FloatingActionButton** overlay above window. *FAB* can move around screen through the touch and toggle a **RecyclerView** when click. **RecyclerView** add a new **CardView** with clipdata when a Clipboard change happened. User can copy the clipdata by click the Card.
 ### Demo
