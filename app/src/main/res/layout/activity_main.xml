@@ -11,11 +11,11 @@
     tools:context="runzhong.floatbar.MainActivity">
 
     <Switch
-        android:text="Switch"
+        android:text="Floating Clipboard Tracker Switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/switch1"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:id="@+id/floating_switch"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>

@@ -6,27 +6,24 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Switch switcher;
+    private Switch float_switcher;
     public final static int REQUEST_CODE= 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        switcher = (Switch)findViewById(R.id.switch1);
+        float_switcher = (Switch)findViewById(R.id.floating_switch);
         if(isMyServiceRunning(FloatingWindow.class)){
-            switcher.toggle();
+            float_switcher.toggle();
         }
 
-        switcher.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        float_switcher.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked){
@@ -42,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
     }
 
     @Override
