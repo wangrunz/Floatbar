@@ -1,2 +1,1 @@
-# Floatbar
-## Floating Clipboard Tracker
+# 剪贴板悬浮窗口
