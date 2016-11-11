@@ -99,9 +99,10 @@ public class FloatingWindow extends Service{
         rv.setLayoutParams(rvParameters);
         mLayoutManager=new LinearLayoutManager(this);
         rv.setLayoutManager(mLayoutManager);
-        rv.setBackgroundColor(Color.argb(20,255,255,255));
+        rv.setBackgroundColor(Color.argb(50,255,255,255));
         madapter=new mAdapter();
         rv.setAdapter(madapter);
+        rv.setVisibility(View.GONE);
 
         LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.MATCH_PARENT);
         ll.setBackgroundColor(Color.argb(0,255,255,255));
@@ -109,7 +110,7 @@ public class FloatingWindow extends Service{
         ll.setGravity(Gravity.TOP);
         ll.setOrientation(ll.VERTICAL);
 
-        parameters = new WindowManager.LayoutParams((int)convertDpToPixel(150,wm),(int)convertDpToPixel(300,wm),WindowManager.LayoutParams.TYPE_PHONE,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSPARENT);
+        parameters = new WindowManager.LayoutParams((int)convertDpToPixel(60,wm),(int)convertDpToPixel(60,wm),WindowManager.LayoutParams.TYPE_PHONE,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSPARENT);
         Point size = new Point();
         wm.getDefaultDisplay().getSize(size);
         parameters.x=size.x-(int)convertDpToPixel(50,wm);
@@ -162,7 +163,6 @@ public class FloatingWindow extends Service{
 
         mClipboardManager=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
         mClipboardManager.addPrimaryClipChangedListener(mOnPrimaryClipChangedListener);
-
 
     }
     @Override

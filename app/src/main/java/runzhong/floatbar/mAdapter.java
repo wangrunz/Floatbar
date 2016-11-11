@@ -5,6 +5,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -41,7 +42,7 @@ public class mAdapter extends RecyclerView.Adapter {
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
         final DefaultClipDataViewHolder vh = (DefaultClipDataViewHolder)holder;
         vh.textView.setText(mClipHistory.get(position).getItemAt(0).getText());
         vh.data=mClipHistory.get(position);
@@ -49,7 +50,16 @@ public class mAdapter extends RecyclerView.Adapter {
             @Override
             public void onClick(View v) {
                 ClipboardManager mClipboardManager = (ClipboardManager)vh.itemView.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                int itemIndex=mClipHistory.indexOf(vh.data);
+                mClipHistory.remove(itemIndex);
+                notifyItemRemoved(itemIndex);
                 mClipboardManager.setPrimaryClip(vh.data);
+            }
+        });
+        vh.itemView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return false;
             }
         });
     }
