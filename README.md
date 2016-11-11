@@ -7,12 +7,12 @@ An Android **FloatingActionButton** overlay above window. *FAB* can move around 
 ### Screenshots
 * Demo dashboard
 
-  ![DEMO](https://github.com/wangrunz/Floatbar/blob/master/screenshot/Screenshot_1478804438.png?raw=true)
+  ![DEMO](https://github.com/wangrunz/Floatbar/blob/master/screenshot/screenshot2.png?raw=true?raw=true)
 
-* Floating window
+* Floating Action Button
 
-  ![DEMO](https://github.com/wangrunz/Floatbar/blob/master/screenshot/Screenshot_1478804448.png?raw=true)
+  ![DEMO](https://github.com/wangrunz/Floatbar/blob/master/screenshot/screenshot3.png?raw=true?raw=true)
 
-* Floating window with clipboard history
+* Floating Action Button with RecyclerView
 
-  ![DEMO](https://github.com/wangrunz/Floatbar/blob/master/screenshot/Screenshot_1478804493.png?raw=true)
+  ![DEMO](https://github.com/wangrunz/Floatbar/blob/master/screenshot/screenshot1.png?raw=true?raw=true)
