@@ -1,9 +1,11 @@
 package runzhong.floatbar;
 
 import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,39 +20,36 @@ import java.util.Vector;
  */
 
 public class mAdapter extends RecyclerView.Adapter {
-    public List<ClipData> mClipHistory= new Vector<>();
+    private List<ClipData> mClipHistory = new Vector<>();
 
-    public static class DefaultClipDataViewHolder extends RecyclerView.ViewHolder{
-        public View itemView;
-        public TextView textView;
-        public ClipData data;
-        public DefaultClipDataViewHolder(View itemView){
-            super(itemView);
-            this.itemView=itemView;
+    public void addClipHistory(ClipData data) {
+        if (ClipDescription.compareMimeTypes(data.getDescription().getMimeType(0),ClipDescription.MIMETYPE_TEXT_PLAIN)){
+            mClipHistory.add(0, data);
+            notifyItemInserted(0);
         }
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        switch (viewType){
+        switch (viewType) {
             default:
-                View v= LayoutInflater.from(parent.getContext()).inflate(R.layout.default_clipdata,parent,false);
+                View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.default_clipdata, parent, false);
                 DefaultClipDataViewHolder vh = new DefaultClipDataViewHolder(v);
-                vh.textView=(TextView)v.findViewById(R.id.clipdatatext);
+                vh.textView = (TextView) v.findViewById(R.id.clipdatatext);
                 return vh;
         }
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
-        final DefaultClipDataViewHolder vh = (DefaultClipDataViewHolder)holder;
+        final DefaultClipDataViewHolder vh = (DefaultClipDataViewHolder) holder;
         vh.textView.setText(mClipHistory.get(position).getItemAt(0).getText());
-        vh.data=mClipHistory.get(position);
+        vh.data = mClipHistory.get(position);
         vh.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ClipboardManager mClipboardManager = (ClipboardManager)vh.itemView.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                int itemIndex=mClipHistory.indexOf(vh.data);
+                ClipboardManager mClipboardManager = (ClipboardManager) vh.itemView.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                int itemIndex = mClipHistory.indexOf(vh.data);
                 mClipHistory.remove(itemIndex);
                 notifyItemRemoved(itemIndex);
                 mClipboardManager.setPrimaryClip(vh.data);
@@ -67,5 +66,16 @@ public class mAdapter extends RecyclerView.Adapter {
     @Override
     public int getItemCount() {
         return mClipHistory.size();
+    }
+
+    public static class DefaultClipDataViewHolder extends RecyclerView.ViewHolder {
+        public View itemView;
+        public TextView textView;
+        public ClipData data;
+
+        public DefaultClipDataViewHolder(View itemView) {
+            super(itemView);
+            this.itemView = itemView;
+        }
     }
 }
