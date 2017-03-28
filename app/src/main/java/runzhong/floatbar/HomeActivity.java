@@ -15,13 +15,13 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.Preference;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
-public class HomeActivity extends AppCompatActivity{
+public class HomeActivity extends AppCompatActivity implements SettingFragment.ReloadCallbacks,HomeFragment.ChangeFragmentCallbacks{
 
-    public final static int REQUEST_CODE = 666;
     private static final String TAG_HOME = "HOME";
     private static final String TAG_SETTINGS = "SETTINGS";
     private static final String TAG_ABOUT = "ABOUT";
@@ -30,6 +30,7 @@ public class HomeActivity extends AppCompatActivity{
 
     private SharedPreferences sharedPreferences;
     private Handler mHandler;
+    private BottomNavigationView navigation;
 
 
     private void loadFragment(){
@@ -41,7 +42,7 @@ public class HomeActivity extends AppCompatActivity{
             public void run() {
                 Fragment fragment = getFragment();
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
+                //fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
                 fragmentTransaction.replace(R.id.content,fragment,CURRENT_TAG);
                 fragmentTransaction.commitNowAllowingStateLoss();
             }
@@ -96,19 +97,8 @@ public class HomeActivity extends AppCompatActivity{
         CURRENT_TAG=TAG_HOME;
         mHandler = new Handler();
 
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-
-        sharedPreferences = getSharedPreferences(getString(R.string.preference_file_key),MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-
-        if (isMyServiceRunning(FloatingWindow.class)){
-            editor.putBoolean(getString(R.string.preference_fab_switch_key),true);
-        }
-        else {
-            editor.putBoolean(getString(R.string.preference_fab_switch_key),false);
-        }
-        editor.commit();
 
         loadFragment();
 
@@ -119,15 +109,27 @@ public class HomeActivity extends AppCompatActivity{
         super.onActivityResult(requestcode,resultcode,data);
     }
 
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(this.ACTIVITY_SERVICE);
-
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
+    @Override
+    public void ReloadFragment() {
+        Runnable mPendingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                Fragment fragment = getFragment();
+                FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+                fragmentTransaction.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
+                fragmentTransaction.replace(R.id.content,fragment,CURRENT_TAG);
+                fragmentTransaction.commitNowAllowingStateLoss();
             }
+        };
+
+        if (mPendingRunnable!=null){
+            mHandler.post(mPendingRunnable);
         }
-        return false;
     }
 
+    @Override
+    public void ChangeFragment(int id) {
+        View child = navigation.findViewById(id);
+        child.performClick();
+    }
 }

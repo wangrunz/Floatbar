@@ -21,13 +21,14 @@
             android:defaultValue="@string/preference_rv_color_default"
             />
         <EditTextPreference
-            android:key="@string/preference_rv_alpha_key"
-            android:title="@string/preference_rv_alpha_title"
-            android:summary="@string/preference_rv_alpha_summary"
             android:defaultValue="50"
             android:dialogTitle="@string/preference_rv_alpha_title"
+            android:hint="da"
             android:inputType="number"
-            />
+            android:key="@string/preference_rv_alpha_key"
+            android:singleLine="false"
+            android:summary="@string/preference_rv_alpha_summary"
+            android:title="@string/preference_rv_alpha_title" />
         <ListPreference
             android:key="@string/preference_side_key"
             android:title="@string/preference_side_title"

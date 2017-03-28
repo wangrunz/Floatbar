@@ -1,12 +1,21 @@
 package runzhong.floatbar;
 
+import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.net.Uri;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 
 /**
@@ -19,6 +28,21 @@ public class HomeFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+
+    private ChangeFragmentCallbacks mCallbacks;
+
+    public interface ChangeFragmentCallbacks{
+        public void ChangeFragment(int id);
+    }
+
+    private RecyclerView recyclerView;
+    private TextView noticeText;
+    private HomeRecyclerAdapter adapter;
+
+    private ClipHistoryDbHelper mDbHelper;
+    private SQLiteDatabase db;
+
+    private Context context;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -59,20 +83,78 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_home, container, false);
+        context = view.getContext();
+        recyclerView = (RecyclerView) (view.findViewById(R.id.home_recycler));
+        noticeText = (TextView) (view.findViewById(R.id.noticeText));
+        mCallbacks = (ChangeFragmentCallbacks) context;
+        noticeText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mCallbacks.ChangeFragment(R.id.navigation_setting);
+            }
+        });
 
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        adapter = new HomeRecyclerAdapter();
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL));
+        mDbHelper = new ClipHistoryDbHelper(context);
+        db = mDbHelper.getReadableDatabase();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(getString(R.string.action_db_inserted));
+        intentFilter.addAction(getString(R.string.action_db_updated));
+        intentFilter.addAction(getString(R.string.action_db_deleted));
+        LocalBroadcastManager.getInstance(context).registerReceiver(localMsgReceiver,intentFilter);
+        return view;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
+    @Override
+    public void onResume(){
+        super.onResume();
+        adapter.refreshClipHistory(db);
+        if (isMyServiceRunning(FloatingWindowService.class)){
+            noticeText.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
+        else {
+            noticeText.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        }
+    }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        mDbHelper.close();
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(localMsgReceiver);
+    }
+
+    private BroadcastReceiver localMsgReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(context.getString(R.string.action_db_inserted))){
+                adapter.refreshClipHistory(db);
+            }
+            else if (action.equals(context.getString(R.string.action_db_updated))){
+                adapter.refreshClipHistory(db);
+            }
+            else if (action.equals(context.getString(R.string.action_db_deleted))){
+                adapter.refreshClipHistory(db);
+            }
+        }
+    };
+
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(context.ACTIVITY_SERVICE);
+
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
