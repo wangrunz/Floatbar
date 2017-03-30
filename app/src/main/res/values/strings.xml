@@ -1,53 +1,73 @@
 <resources>
     <string name="app_name">Floatbar</string>
+    <string name="search_hint">hint</string>
 
 
     <string name="notification_title">FloatingBar</string>
     <string name="notification_msg">FloatingBar is activated</string>
 
+    <string name="service_enable">Enable Service</string>
+    <string name="service_disable">Disable</string>
 
     <string name="preference_file_key">1234567890</string>
-    <string name="preference_fab_switch_key">fab switch</string>
-    <string name="preference_fab_switch_title">Enable</string>
-    <string name="preference_fab_switch_summary">Reactivate service to apply changes</string>
-    <string name="preference_fab_switch_default">false</string>
-    <string name="preference_fab_switch_on">true</string>
-    <string name="preference_fab_switch_off">false</string>
+
+    <string name="preference_enable_switch_key">service switch</string>
+    <string name="preference_enable_switch_title">Enable</string>
+    <string name="preference_enable_switch_summary">Reactivate service to apply changes</string>
+    <string name="preference_enable_switch_default">false</string>
+    <string name="preference_enable_switch_on">true</string>
+    <string name="preference_enable_switch_off">false</string>
+
     <string name="preference_appearance">Appearance</string>
+
+    <string name="preference_fab_switch_key">fab switch</string>
+    <string name="preference_fab_switch_title">Floating Bubble</string>
+    <string name="preference_fab_switch_default">false</string>
+
     <string name="preference_fab_color_key">fab color</string>
-    <string name="preference_fab_color_title">Button Color</string>
-    <string name="preference_fab_color_default">#FFFFFF</string>
+    <string name="preference_fab_color_title">Bubble Color</string>
+    <string name="preference_fab_color_default">#177CB0</string>
+
     <string name="preference_invalid_color_code">Invalid color code</string>
     <string name="preference_invalid_alpha_code">Invalid alpha value</string>
-    <string name="preference_rv_color_key">rv color</string>
-    <string name="preference_rv_color_title">Background color</string>
-    <string name="preference_rv_color_default">#FFFFFF</string>
-    <string name="preference_rv_alpha_key">rv alpha</string>
-    <string name="preference_rv_alpha_title">Background Transparent</string>
-    <string name="preference_rv_alpha_summary">Set alpha for background color</string>
-    <string name="preference_experiment">Experimental Features</string>
-    <string name="preference_side_key">side</string>
-    <string name="preference_side_title">Side</string>
-    <string name="preference_side_default">right</string>
-    <string name="preference_side_left">Left</string>
-    <string name="preference_side_right">Right</string>
-    <string name="preference_side_summary">Choose display side</string>
+
+    <string name="preference_fab_alpha_key">fab alpha</string>
+    <string name="preference_fab_alpha_title">Bubble Transparent</string>
+    <string name="preference_fab_alpha_summary">Set alpha for Bubble</string>
+
+    <string name="preference_fab_size_key">fab size</string>
+    <string name="preference_fab_size_title">Bubble Size</string>
+
+    <string name="preference_experiment">About</string>
 
     <string name="preference_reset_key">preference reset</string>
-    <string name="preference_reset_title">Reset</string>
+    <string name="preference_reset_title">Reset Settings</string>
     <string name="preference_reset_msg">Are you sure to reset all settings to default values?</string>
     <string name="preference_reset_btn_yes">Reset</string>
     <string name="preference_reset_btn_no">Cancel</string>
 
-    <string name="title_home">Home</string>
+    <string name="preference_clear_key">clear history</string>
+    <string name="preference_clear_title">Clear Clip History</string>
+    <string name="preference_clear_msg">Are you sure to clear all clipboard history?</string>
+    <string name="preference_clear_btn_yes">Clear</string>
+    <string name="preference_clear_btn_no">Cancel</string>
+
+    <string name="preference_about_key">about</string>
+    <string name="preference_about_title">About Me</string>
+
+    <string name="title_recent">Recent</string>
     <string name="title_setting">Settings</string>
-    <string name="title_about">About</string>
+    <string name="title_favorites">Favorites</string>
     <string name="title_activity_home">HomeActivity</string>
 
     <string name="action_db_inserted">ACTION_DB_INSERTED</string>
     <string name="action_db_updated">ACTION_DB_UPDATED</string>
     <string name="action_db_deleted">ACTION_DB_DELETED</string>
     <string name="action_db_delete">ACTION_DB_DELETE</string>
+    <string name="action_fab_toggle">ACTION_FAB_TOGGLE</string>
+    <string name="action_fab_refresh">ACTION_FAB_REFRESH</string>
+    <string name="action_db_clear">ACTION_DB_CLEAR</string>
+    <string name="action_db_cleared">ACTION_DB_CLEARED</string>
 
     <string name="clipdata_delete_msg">Are you sure you want to delete this item?</string>
     <string name="clipdata_delete_btn_yes">Delete</string>

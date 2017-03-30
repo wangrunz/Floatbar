@@ -11,40 +11,30 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.preference.PreferenceManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 
 public class FloatingWindowService extends Service {
     private static final String TAG = "ClipboardManager";
+    private boolean fab_status;
     private ClipHistoryDbHelper mDbHelper;
     private SQLiteDatabase db;
     private static final int NOTIFICATION_ID = 100;
     private WindowManager wm;
     private WindowManager.LayoutParams parameters;
-    private LinearLayout ll;
-    private RecyclerView rv;
-    private FloatingRecyclerAdapter madapter;
-    private RecyclerView.LayoutManager mLayoutManager;
-    private FloatingActionButton fab;
+    private OverlayView overlayView;
     private ClipboardManager mClipboardManager;
     private ClipboardManager.OnPrimaryClipChangedListener mOnPrimaryClipChangedListener = new ClipboardManager.OnPrimaryClipChangedListener() {
         @Override
@@ -102,13 +92,13 @@ public class FloatingWindowService extends Service {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action.equals(context.getString(R.string.action_db_inserted))){
-                madapter.refreshClipHistory(db);
+                //madapter.refreshClipHistory(db);
             }
             else if (action.equals(context.getString(R.string.action_db_updated))){
-                madapter.refreshClipHistory(db);
+                //madapter.refreshClipHistory(db);
             }
             else if (action.equals(context.getString(R.string.action_db_deleted))){
-                madapter.refreshClipHistory(db);
+                //madapter.refreshClipHistory(db);
             }
             else if (action.equals(context.getString(R.string.action_db_delete))){
                 //do delete
@@ -120,8 +110,81 @@ public class FloatingWindowService extends Service {
                     sendMessage(getString(R.string.action_db_deleted),"id",id);
                 }
             }
+            else if (action.equals(getString(R.string.action_fab_toggle))){
+                toggleFab();
+            }
+            else if (action.equals(getString(R.string.action_fab_refresh))){
+                refreshFAB();
+            }
+            else if (action.equals(getString(R.string.action_db_clear))){
+                db.delete(ClipHisotryEntry.ClipEntry.TABLE_NAME,null,null);
+                sendMessage(getString(R.string.action_db_cleared),null,null);
+            }
         }
     };
+
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        fab_status = false;
+        boolean fab_status = sharedPreferences.getBoolean(getString(R.string.preference_fab_switch_key),false);
+        if (fab_status){
+            toggleFab();
+        }
+
+        mDbHelper = new ClipHistoryDbHelper(this);
+        db = mDbHelper.getWritableDatabase();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(getString(R.string.action_db_inserted));
+        intentFilter.addAction(getString(R.string.action_db_updated));
+        intentFilter.addAction(getString(R.string.action_db_deleted));
+        intentFilter.addAction(getString(R.string.action_db_delete));
+        intentFilter.addAction(getString(R.string.action_db_clear));
+        intentFilter.addAction(getString(R.string.action_fab_refresh));
+        intentFilter.addAction(getString(R.string.action_fab_toggle));
+        LocalBroadcastManager.getInstance(this).registerReceiver(localMsgReceiver,intentFilter);
+
+        mClipboardManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        mClipboardManager.addPrimaryClipChangedListener(mOnPrimaryClipChangedListener);
+
+
+        Intent notificationIntent = new Intent(this,HomeActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
+        Notification notification = new Notification.Builder(this)
+                .setContentTitle(getText(R.string.notification_title))
+                .setContentText(getText(R.string.notification_msg))
+                .setSmallIcon(R.drawable.ic_assignment_turned_in_black_36dp)
+                .setContentIntent(pendingIntent)
+                .setPriority(Notification.PRIORITY_MIN)
+                .build();
+        startForeground(NOTIFICATION_ID,notification);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        mDbHelper.close();
+        if (fab_status){
+            toggleFab();
+        }
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(localMsgReceiver);
+        mClipboardManager.removePrimaryClipChangedListener(mOnPrimaryClipChangedListener);
+        stopSelf();
+    }
+
 
     private void sendMessage(String action, String key, long value){
         sendMessage(action,key,String.valueOf(value));
@@ -147,155 +210,74 @@ public class FloatingWindowService extends Service {
         return dp;
     }
 
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
+    public void toggleFab(){
+        if (!fab_status){
+            wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+            overlayView = new OverlayView(this);
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+            overlayView.setFabOnTouchListener(new View.OnTouchListener() {
+                int x, y;
+                float touchedX, touchedY;
 
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(getString(R.string.action_db_inserted));
-        intentFilter.addAction(getString(R.string.action_db_updated));
-        intentFilter.addAction(getString(R.string.action_db_deleted));
-        intentFilter.addAction(getString(R.string.action_db_delete));
-        LocalBroadcastManager.getInstance(this).registerReceiver(localMsgReceiver,intentFilter);
-
-        wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        ll = new LinearLayout(this);
-
-        mDbHelper = new ClipHistoryDbHelper(this);
-        db = mDbHelper.getWritableDatabase();
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String fab_color = sharedPreferences.getString(getString(R.string.preference_fab_color_key),getString(R.string.preference_fab_color_default));
-        int fabColorCode = Color.parseColor(fab_color);
-        String rv_color = sharedPreferences.getString(getString(R.string.preference_rv_color_key),getString(R.string.preference_rv_color_default));
-        String fab_side = sharedPreferences.getString(getString(R.string.preference_side_key),getString(R.string.preference_side_default));
-        String rv_alpha = sharedPreferences.getString(getString(R.string.preference_rv_alpha_key),"50");
-
-        fab = new FloatingActionButton(new android.view.ContextThemeWrapper(this, R.style.AppTheme));
-        fab.setLayoutParams(new ViewGroup.LayoutParams((int) convertDpToPixel(40, wm), (int) convertDpToPixel(40, wm)));
-        fab.setUseCompatPadding(true);
-        fab.setClickable(true);
-        fab.setImageResource(R.drawable.ic_assignment_black_36dp);
-        fab.setCompatElevation(convertDpToPixel(6, wm));
-        fab.setSize(fab.SIZE_MINI);
-        fab.setBackgroundTintList(ColorStateList.valueOf(fabColorCode));
-
-
-        rv = new RecyclerView(this);
-        rv.setVerticalScrollBarEnabled(true);
-        RecyclerView.LayoutParams rvParameters = new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.MATCH_PARENT);
-        rv.setLayoutParams(rvParameters);
-        mLayoutManager = new LinearLayoutManager(this);
-        rv.setLayoutManager(mLayoutManager);
-        rv.setBackgroundColor(Color.parseColor("#"+ String.format("%02X",(int)(Integer.parseInt(rv_alpha)*2.55))+rv_color.substring(1,7)));
-        madapter = new FloatingRecyclerAdapter();
-        rv.setAdapter(madapter);
-        rv.setVisibility(View.GONE);
-
-        LinearLayout.LayoutParams llParameters = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-        ll.setBackgroundColor(Color.argb(0, 255, 255, 255));
-        ll.setLayoutParams(llParameters);
-        if (fab_side.equals(getString(R.string.preference_side_default))){
-            ll.setGravity(Gravity.TOP | Gravity.LEFT);
-        }
-        else {
-            ll.setGravity(Gravity.TOP | Gravity.RIGHT);
-        }
-        ll.setOrientation(ll.VERTICAL);
-
-        parameters = new WindowManager.LayoutParams((int) convertDpToPixel(60, wm), (int) convertDpToPixel(60, wm), WindowManager.LayoutParams.TYPE_PHONE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSPARENT);
-        Point size = new Point();
-        wm.getDefaultDisplay().getSize(size);
-        parameters.x = size.x - (int) convertDpToPixel(50, wm);
-        parameters.y = size.y / 3;
-        if (fab_side.equals(getString(R.string.preference_side_default))){
-            parameters.gravity = Gravity.TOP | Gravity.LEFT;
-        }
-        else {
-            parameters.gravity = Gravity.TOP | Gravity.RIGHT;
-        }
-
-
-        ll.addView(fab);
-        ll.addView(rv);
-        wm.addView(ll, parameters);
-
-        fab.setOnTouchListener(new View.OnTouchListener() {
-
-            int x, y;
-            float touchedX, touchedY;
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                WindowManager.LayoutParams updatedParameters = parameters;
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        x = updatedParameters.x;
-                        y = updatedParameters.y;
-                        touchedX = event.getRawX();
-                        touchedY = event.getRawY();
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        if (Math.abs(touchedX - event.getRawX()) < 10 && Math.abs(touchedY - event.getRawY()) < 10) {
-                            if (rv.getVisibility() == View.VISIBLE) {
-                                rv.setVisibility(View.GONE);
-                                updatedParameters.width = (int) convertDpToPixel(60, wm);
-                                updatedParameters.height = (int) convertDpToPixel(60, wm);
-                            } else {
-                                updatedParameters.width = (int) convertDpToPixel(150, wm);
-                                updatedParameters.height = (int) convertDpToPixel(300, wm);
-                                rv.setVisibility(View.VISIBLE);
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    WindowManager.LayoutParams updatedParameters = parameters;
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            x = updatedParameters.x;
+                            y = updatedParameters.y;
+                            touchedX = event.getRawX();
+                            touchedY = event.getRawY();
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            if (Math.abs(touchedX - event.getRawX()) < 10
+                                    && Math.abs(touchedY - event.getRawY()) < 10) {
+                                overlayView.Toggle();
+                                showPopup(overlayView);
                             }
-                            wm.updateViewLayout(ll, updatedParameters);
-                        }
-                    case MotionEvent.ACTION_MOVE:
-                        //updatedParameters.x=(int)(x+(event.getRawX()-touchedX));
-                        updatedParameters.y = (int) (y + (event.getRawY() - touchedY));
-
-                        wm.updateViewLayout(ll, updatedParameters);
-                        break;
-                    default:
-                        break;
+                        case MotionEvent.ACTION_MOVE:
+                            updatedParameters.x=(int)(x+(event.getRawX()-touchedX));
+                            updatedParameters.y = (int) (y + (event.getRawY() - touchedY));
+                            wm.updateViewLayout(overlayView, updatedParameters);
+                            break;
+                        default:
+                            break;
+                    }
+                    return false;
                 }
-                return false;
-            }
-        });
+            });
 
-        mClipboardManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        mClipboardManager.addPrimaryClipChangedListener(mOnPrimaryClipChangedListener);
+            parameters = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_PHONE,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                            |WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                    PixelFormat.TRANSPARENT);
+            Point size = new Point();
+            wm.getDefaultDisplay().getSize(size);
+            parameters.x = size.x - (int) convertDpToPixel(100, wm);
+            parameters.y = size.y / 3;
+            parameters.gravity = Gravity.TOP | Gravity.LEFT;
 
-
-        Intent notificationIntent = new Intent(this,HomeActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
-        Notification notification = new Notification.Builder(this)
-                .setContentTitle(getText(R.string.notification_title))
-                .setContentText(getText(R.string.notification_msg))
-                .setSmallIcon(R.drawable.ic_assignment_turned_in_black_36dp)
-                .setContentIntent(pendingIntent)
-                .setPriority(Notification.PRIORITY_MIN)
-                .build();
-        startForeground(NOTIFICATION_ID,notification);
-
-        madapter.refreshClipHistory(db);
+            wm.addView(overlayView,parameters);
+            fab_status = true;
+        }
+        else {
+            wm.removeView(overlayView);
+            fab_status = false;
+        }
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
+    public void refreshFAB(){
+        if (fab_status){
+            toggleFab();
+            toggleFab();
+        }
     }
 
-    @Override
-    public void onDestroy() {
-        wm.removeView(ll);
-        mDbHelper.close();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(localMsgReceiver);
-        mClipboardManager.removePrimaryClipChangedListener(mOnPrimaryClipChangedListener);
-        stopSelf();
+    public void showPopup(View v){
+
     }
 }

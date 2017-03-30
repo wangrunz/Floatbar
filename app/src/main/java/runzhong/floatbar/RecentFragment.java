@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
@@ -20,10 +19,10 @@ import android.widget.TextView;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link HomeFragment#newInstance} factory method to
+ * Use the {@link RecentFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class HomeFragment extends Fragment {
+public class RecentFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -37,7 +36,7 @@ public class HomeFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private TextView noticeText;
-    private HomeRecyclerAdapter adapter;
+    private RecentRecyclerAdapter adapter;
 
     private ClipHistoryDbHelper mDbHelper;
     private SQLiteDatabase db;
@@ -48,7 +47,7 @@ public class HomeFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    public HomeFragment() {
+    public RecentFragment() {
         // Required empty public constructor
     }
 
@@ -58,11 +57,11 @@ public class HomeFragment extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment HomeFragment.
+     * @return A new instance of fragment RecentFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static HomeFragment newInstance(String param1, String param2) {
-        HomeFragment fragment = new HomeFragment();
+    public static RecentFragment newInstance(String param1, String param2) {
+        RecentFragment fragment = new RecentFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -83,7 +82,7 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_home, container, false);
+        View view = inflater.inflate(R.layout.fragment_recent, container, false);
         context = view.getContext();
         recyclerView = (RecyclerView) (view.findViewById(R.id.home_recycler));
         noticeText = (TextView) (view.findViewById(R.id.noticeText));
@@ -95,7 +94,7 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        adapter = new HomeRecyclerAdapter();
+        adapter = new RecentRecyclerAdapter();
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL));
         mDbHelper = new ClipHistoryDbHelper(context);

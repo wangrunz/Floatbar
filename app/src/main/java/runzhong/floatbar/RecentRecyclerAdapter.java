@@ -26,7 +26,7 @@ import java.util.Vector;
  * Created by wrz19 on 3/28/2017.
  */
 
-public class HomeRecyclerAdapter extends RecyclerView.Adapter {
+public class RecentRecyclerAdapter extends RecyclerView.Adapter {
     private List<HashMap> mClipHistoryArrary = new Vector<>();
 
     public void refreshClipHistory(SQLiteDatabase db){
@@ -57,14 +57,14 @@ public class HomeRecyclerAdapter extends RecyclerView.Adapter {
         switch (viewType) {
             default:
                 View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.clip_cell_normal, parent, false);
-                HomeRecyclerAdapter.DefaultClipDataViewHolder vh = new HomeRecyclerAdapter.DefaultClipDataViewHolder(v);
+                RecentRecyclerAdapter.DefaultClipDataViewHolder vh = new RecentRecyclerAdapter.DefaultClipDataViewHolder(v);
                 return vh;
         }
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
-        final HomeRecyclerAdapter.DefaultClipDataViewHolder vh = (HomeRecyclerAdapter.DefaultClipDataViewHolder) holder;
+        final RecentRecyclerAdapter.DefaultClipDataViewHolder vh = (RecentRecyclerAdapter.DefaultClipDataViewHolder) holder;
         vh.map = mClipHistoryArrary.get(position);
         final String text = String.valueOf(vh.map.get("data"));
         vh.textView.setText(text);

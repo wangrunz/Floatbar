@@ -1,26 +1,24 @@
 package runzhong.floatbar;
 
 import android.app.ActivityManager;
+import android.app.SearchManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.preference.Preference;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.Switch;
-import android.widget.TextView;
 
-public class HomeActivity extends AppCompatActivity implements SettingFragment.ReloadCallbacks,HomeFragment.ChangeFragmentCallbacks{
+public class HomeActivity extends AppCompatActivity implements SettingFragment.ReloadCallbacks,RecentFragment.ChangeFragmentCallbacks{
 
     private static final String TAG_HOME = "HOME";
     private static final String TAG_SETTINGS = "SETTINGS";
@@ -56,13 +54,13 @@ public class HomeActivity extends AppCompatActivity implements SettingFragment.R
     private Fragment getFragment() {
         switch (CURRENT_TAG){
             case TAG_HOME:
-                return new HomeFragment();
+                return new RecentFragment();
             case TAG_SETTINGS:
                 return new SettingFragment();
             case TAG_ABOUT:
                 return new AboutFragment();
             default:
-                return new HomeFragment();
+                return new RecentFragment();
         }
     }
 
@@ -79,7 +77,7 @@ public class HomeActivity extends AppCompatActivity implements SettingFragment.R
                 case R.id.navigation_setting:
                     CURRENT_TAG=TAG_SETTINGS;
                     break;
-                case R.id.navigation_about:
+                case R.id.navigation_favorites:
                     CURRENT_TAG=TAG_ABOUT;
                     break;
             }
@@ -94,6 +92,10 @@ public class HomeActivity extends AppCompatActivity implements SettingFragment.R
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        //getSupportActionBar().setDisplayShowTitleEnabled(false);
+
         CURRENT_TAG=TAG_HOME;
         mHandler = new Handler();
 
@@ -103,6 +105,54 @@ public class HomeActivity extends AppCompatActivity implements SettingFragment.R
         loadFragment();
 
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu){
+        getMenuInflater().inflate(R.menu.options,menu);
+        if (isMyServiceRunning(FloatingWindowService.class)){
+            menu.findItem(R.id.action_settings).setTitle(R.string.service_disable);
+        }
+        else {
+            menu.findItem(R.id.action_settings).setTitle(R.string.service_enable);
+        };
+        SearchManager searchManager =
+                (SearchManager) getSystemService(SEARCH_SERVICE);
+        MenuItem menuItem = menu.findItem(R.id.action_search);
+        SearchView searchView =
+                (SearchView) MenuItemCompat.getActionView(menuItem);
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getComponentName()));
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        int id = item.getItemId();
+        if (id == R.id.action_settings){
+            if (isMyServiceRunning(FloatingWindowService.class)){
+                stopService(new Intent(this, FloatingWindowService.class));
+                item.setTitle(R.string.service_enable);
+            }
+            else {
+                startService(new Intent(this, FloatingWindowService.class));
+                item.setTitle(R.string.service_disable);
+            }
+        }
+        ReloadFragment();
+        return true;
+    }
+
 
     @Override
     protected void onActivityResult(int requestcode, int resultcode, Intent data) {
@@ -131,5 +181,16 @@ public class HomeActivity extends AppCompatActivity implements SettingFragment.R
     public void ChangeFragment(int id) {
         View child = navigation.findViewById(id);
         child.performClick();
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="side">
-        <item>Left</item>
-        <item>Right</item>
+    <string-array name="size">
+        <item>Mini</item>
+        <item>Normal</item>
     </string-array>
-    <string-array name="sideAlias">
-        <item>left</item>
-        <item>right</item>
+    <string-array name="sizeAlias">
+        <item>mini</item>
+        <item>normal</item>
     </string-array>
 
 </resources>
