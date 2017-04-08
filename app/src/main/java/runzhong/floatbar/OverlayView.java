@@ -63,9 +63,8 @@ public class OverlayView extends CoordinatorLayout {
         switch (event.getAction()){
             case MotionEvent.ACTION_OUTSIDE:
                 if (fab.getVisibility()==GONE){
-                    Toggle();
+                    //Toggle();
                 }
-                break;
             default:
                 break;
         }

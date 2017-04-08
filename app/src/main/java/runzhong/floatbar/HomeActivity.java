@@ -58,7 +58,7 @@ public class HomeActivity extends AppCompatActivity implements SettingFragment.R
             case TAG_SETTINGS:
                 return new SettingFragment();
             case TAG_ABOUT:
-                return new AboutFragment();
+                return new FavoriteFragment();
             default:
                 return new RecentFragment();
         }
@@ -115,24 +115,6 @@ public class HomeActivity extends AppCompatActivity implements SettingFragment.R
         else {
             menu.findItem(R.id.action_settings).setTitle(R.string.service_enable);
         };
-        SearchManager searchManager =
-                (SearchManager) getSystemService(SEARCH_SERVICE);
-        MenuItem menuItem = menu.findItem(R.id.action_search);
-        SearchView searchView =
-                (SearchView) MenuItemCompat.getActionView(menuItem);
-        searchView.setSearchableInfo(
-                searchManager.getSearchableInfo(getComponentName()));
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
-        });
         return true;
     }
 

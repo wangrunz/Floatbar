@@ -15,26 +15,32 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.preference.PreferenceManager;
+import android.support.v7.widget.PopupMenu;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 
 public class FloatingWindowService extends Service {
     private static final String TAG = "ClipboardManager";
     private boolean fab_status;
+    private boolean popup_status;
     private ClipHistoryDbHelper mDbHelper;
     private SQLiteDatabase db;
     private static final int NOTIFICATION_ID = 100;
     private WindowManager wm;
     private WindowManager.LayoutParams parameters;
     private OverlayView overlayView;
+    private PopupView popupView;
     private ClipboardManager mClipboardManager;
     private ClipboardManager.OnPrimaryClipChangedListener mOnPrimaryClipChangedListener = new ClipboardManager.OnPrimaryClipChangedListener() {
         @Override
@@ -49,16 +55,16 @@ public class FloatingWindowService extends Service {
                 String text = newClip.getItemAt(i).getText().toString();
 
                 String[] projection = {
-                        ClipHisotryEntry.ClipEntry._ID
+                        ClipHistoryEntry.ClipEntry._ID
                 };
 
-                String selection = ClipHisotryEntry.ClipEntry.COLUMN_NAME_DATA + " = ?";
+                String selection = ClipHistoryEntry.ClipEntry.COLUMN_NAME_DATA + " = ?";
                 String[] selectionArgs = {text};
 
-                String sortOrder = ClipHisotryEntry.ClipEntry.COLUMN_NAME_UPDATE_TIME + " DESC";
+                String sortOrder = ClipHistoryEntry.ClipEntry.COLUMN_NAME_UPDATE_TIME + " DESC";
 
                 Cursor cursor = db.query(
-                        ClipHisotryEntry.ClipEntry.TABLE_NAME,
+                        ClipHistoryEntry.ClipEntry.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
@@ -68,19 +74,19 @@ public class FloatingWindowService extends Service {
                 );
                 if (cursor.getCount()>0){
                     while (cursor.moveToNext()){
-                        long id = cursor.getLong(cursor.getColumnIndex(ClipHisotryEntry.ClipEntry._ID));
+                        long id = cursor.getLong(cursor.getColumnIndex(ClipHistoryEntry.ClipEntry._ID));
                         //update table count+1
-                        String query = "UPDATE " + ClipHisotryEntry.ClipEntry.TABLE_NAME +" SET " +
-                                ClipHisotryEntry.ClipEntry.COLUMN_NAME_UPDATE_TIME + " = CURRENT_TIMESTAMP " +
-                                "WHERE "+ ClipHisotryEntry.ClipEntry._ID + " = " + String.valueOf(id);
+                        String query = "UPDATE " + ClipHistoryEntry.ClipEntry.TABLE_NAME +" SET " +
+                                ClipHistoryEntry.ClipEntry.COLUMN_NAME_UPDATE_TIME + " = CURRENT_TIMESTAMP " +
+                                "WHERE "+ ClipHistoryEntry.ClipEntry._ID + " = " + String.valueOf(id);
                         db.execSQL(query);
                         sendMessage(getString(R.string.action_db_updated),"id",id);
                     }
                 }
                 else {
                     ContentValues values = new ContentValues();
-                    values.put(ClipHisotryEntry.ClipEntry.COLUMN_NAME_DATA,text);
-                    long id = db.insert(ClipHisotryEntry.ClipEntry.TABLE_NAME, null, values);
+                    values.put(ClipHistoryEntry.ClipEntry.COLUMN_NAME_DATA,text);
+                    long id = db.insert(ClipHistoryEntry.ClipEntry.TABLE_NAME, null, values);
                     sendMessage(getString(R.string.action_db_inserted),"id",id);
                 }
                 cursor.close();
@@ -104,9 +110,9 @@ public class FloatingWindowService extends Service {
                 //do delete
                 String id = intent.getStringExtra("id");
                 if (id != null){
-                    String selection = ClipHisotryEntry.ClipEntry._ID +" = ?";
+                    String selection = ClipHistoryEntry.ClipEntry._ID +" = ?";
                     String[] selectionArgs = {String.valueOf(id)};
-                    db.delete(ClipHisotryEntry.ClipEntry.TABLE_NAME,selection,selectionArgs);
+                    db.delete(ClipHistoryEntry.ClipEntry.TABLE_NAME,selection,selectionArgs);
                     sendMessage(getString(R.string.action_db_deleted),"id",id);
                 }
             }
@@ -117,8 +123,37 @@ public class FloatingWindowService extends Service {
                 refreshFAB();
             }
             else if (action.equals(getString(R.string.action_db_clear))){
-                db.delete(ClipHisotryEntry.ClipEntry.TABLE_NAME,null,null);
+                db.delete(ClipHistoryEntry.ClipEntry.TABLE_NAME,null,null);
                 sendMessage(getString(R.string.action_db_cleared),null,null);
+            }
+            else if (action.equals(getString(R.string.action_db_title_changed))){
+                Bundle extras = intent.getExtras();
+                String title = extras.getString("title");
+                String id = extras.getString("id");
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(ClipHistoryEntry.ClipEntry.COLUMN_NAME_TITLE,title);
+
+                String selection = ClipHistoryEntry.ClipEntry._ID + " = ?";
+                String[] selectionArgs = {id};
+
+                db.update(ClipHistoryEntry.ClipEntry.TABLE_NAME,contentValues,selection,selectionArgs);
+            }
+            else if (action.equals(getString(R.string.action_db_favorite_changed))){
+                Bundle extras = intent.getExtras();
+                String favorite = extras.getString("favorite");
+                String id = extras.getString("id");
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(ClipHistoryEntry.ClipEntry.COLUMN_NAME_FAVORITE,Integer.valueOf(favorite));
+
+                String selection = ClipHistoryEntry.ClipEntry._ID + " = ?";
+                String[] selectionArgs = {id};
+
+                db.update(ClipHistoryEntry.ClipEntry.TABLE_NAME,contentValues,selection,selectionArgs);
+            }
+            else if (action.equals(getString(R.string.action_fab_hide_toggle))){
+                overlayView.Toggle();
+                wm.removeView(popupView);
+                popup_status=false;
             }
         }
     };
@@ -135,6 +170,7 @@ public class FloatingWindowService extends Service {
         super.onCreate();
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         fab_status = false;
+        popup_status=false;
         boolean fab_status = sharedPreferences.getBoolean(getString(R.string.preference_fab_switch_key),false);
         if (fab_status){
             toggleFab();
@@ -151,6 +187,9 @@ public class FloatingWindowService extends Service {
         intentFilter.addAction(getString(R.string.action_db_clear));
         intentFilter.addAction(getString(R.string.action_fab_refresh));
         intentFilter.addAction(getString(R.string.action_fab_toggle));
+        intentFilter.addAction(getString(R.string.action_db_favorite_changed));
+        intentFilter.addAction(getString(R.string.action_db_title_changed));
+        intentFilter.addAction(getString(R.string.action_fab_hide_toggle));
         LocalBroadcastManager.getInstance(this).registerReceiver(localMsgReceiver,intentFilter);
 
         mClipboardManager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
@@ -190,7 +229,6 @@ public class FloatingWindowService extends Service {
         sendMessage(action,key,String.valueOf(value));
     }
     private void sendMessage(String action, String key, String value) {
-        Log.d("sender", "Broadcasting message");
         Intent intent = new Intent(action);
         intent.putExtra(key, value);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -211,6 +249,10 @@ public class FloatingWindowService extends Service {
     }
 
     public void toggleFab(){
+        if (popup_status){
+            wm.removeView(popupView);
+            popup_status=false;
+        }
         if (!fab_status){
             wm = (WindowManager) getSystemService(WINDOW_SERVICE);
             overlayView = new OverlayView(this);
@@ -233,7 +275,7 @@ public class FloatingWindowService extends Service {
                             if (Math.abs(touchedX - event.getRawX()) < 10
                                     && Math.abs(touchedY - event.getRawY()) < 10) {
                                 overlayView.Toggle();
-                                showPopup(overlayView);
+                                showPopup();
                             }
                         case MotionEvent.ACTION_MOVE:
                             updatedParameters.x=(int)(x+(event.getRawX()-touchedX));
@@ -257,9 +299,9 @@ public class FloatingWindowService extends Service {
                     PixelFormat.TRANSPARENT);
             Point size = new Point();
             wm.getDefaultDisplay().getSize(size);
-            parameters.x = size.x - (int) convertDpToPixel(100, wm);
-            parameters.y = size.y / 3;
-            parameters.gravity = Gravity.TOP | Gravity.LEFT;
+            parameters.x = size.x/2 - (int) convertDpToPixel(100, wm);
+            parameters.y = -size.y / 6;
+            parameters.gravity = Gravity.CENTER;
 
             wm.addView(overlayView,parameters);
             fab_status = true;
@@ -277,7 +319,22 @@ public class FloatingWindowService extends Service {
         }
     }
 
-    public void showPopup(View v){
+    public void showPopup(){
+        popupView = new PopupView(this);
+        WindowManager.LayoutParams popup_parameters = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                        | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSPARENT
+        );
+        parameters.x=0;
+        parameters.y=0;
+        parameters.gravity=Gravity.CENTER;
 
+        popup_status=true;
+        wm.addView(popupView,popup_parameters);
     }
 }
