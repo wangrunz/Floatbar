@@ -25,6 +25,7 @@ import android.support.v7.widget.PopupMenu;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -237,15 +238,13 @@ public class FloatingWindowService extends Service {
     public static float convertDpToPixel(float dp, WindowManager windowManager) {
         DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
-        float px = dp * ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
-        return px;
+        return dp * ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
     public static float convertPixelsToDp(float px, WindowManager windowManager) {
         DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getMetrics(metrics);
-        float dp = px / ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
-        return dp;
+        return px / ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
     public void toggleFab(){
